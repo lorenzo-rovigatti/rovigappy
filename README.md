@@ -17,7 +17,7 @@ Is recommended though to setup the whole system by running:
 
 To develop on this project it is preferable to install Git Flow and open
 your own feature starting from develop.
-To do run:
+To do so run:
 
     sudo apt-get install git-flow
 
