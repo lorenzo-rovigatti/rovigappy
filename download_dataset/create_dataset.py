@@ -1,7 +1,7 @@
 from datapackage import Package
 
 
-available_data_list = ['english-premier-league', 'spanish-la-liga', 'italian-serie-a',
+AVAILABLE_DATA_LIST = ['english-premier-league', 'spanish-la-liga', 'italian-serie-a',
                        'german-bundesliga', 'french-ligue-1']
 
 
@@ -12,7 +12,7 @@ def save_package_to_csv(package, name):
 
 def main():
 
-    for data_name in available_data_list:
+    for data_name in AVAILABLE_DATA_LIST:
 
         package = Package('https://datahub.io/sports-data/{}/datapackage.json'.format(data_name))
 
