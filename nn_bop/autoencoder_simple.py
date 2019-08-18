@@ -87,10 +87,10 @@ with writer.as_default():
         for epoch in range(epochs):
             for step, batch_features in enumerate(training_dataset):
                 train(loss, autoencoder, opt, batch_features)
-                loss_values = loss(autoencoder, batch_features)
+                loss_value = loss(autoencoder, batch_features)
                 original = tf.reshape(batch_features, (batch_features.shape[0], 28, 28, 1))
                 reconstructed = tf.reshape(autoencoder(tf.constant(batch_features)), (batch_features.shape[0], 28, 28, 1))
-                tf.summary.scalar('loss', loss_values, step=real_step)
+                tf.summary.scalar('loss', loss_value, step=real_step)
                 tf.summary.image('original', original, max_outputs=10, step=real_step)
                 tf.summary.image('reconstructed', reconstructed, max_outputs=10, step=real_step)
                 real_step += 1
