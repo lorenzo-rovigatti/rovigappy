@@ -5,9 +5,6 @@ import numpy as np
 import sys
 
 import autoencoder as ae
-from matplotlib.mlab import slopes
-
-COLORS = ["red", "green", "blue", "yellow", "cyan", "magenta", "orange", "violet", "brown", "pink", "black", "grey"]
 
 class MyParser(ba.BaseParser):
     def __init__(self):
@@ -29,7 +26,8 @@ class MyParser(ba.BaseParser):
             
         return syst
             
-            
+
+COLORS = ["red", "green", "blue", "yellow", "cyan", "magenta", "orange", "violet", "brown", "pink", "black", "grey"]            
 def print_cogli1_conf(system, colors, filename):
     with open(filename, "w") as output:
         print(".Box:%lf,%lf,%lf" % tuple(system.box), file=output)
@@ -38,7 +36,7 @@ def print_cogli1_conf(system, colors, filename):
             
     
 if len(sys.argv) < 2:
-    print("Usage is %s input" % sys.argv[0], file=sys.stderr)
+    print("Usage is %s input [bop_file]" % sys.argv[0], file=sys.stderr)
     exit(0)
 
 input_filename = sys.argv[1]
@@ -46,13 +44,15 @@ input_filename = sys.argv[1]
 parser = MyParser()
 syst = parser.parse(input_filename)
 
-# COMPUTE THE BOND ORDER PARAMETERS
-
-nf = ba.SANNFinder(2.5, ba.SANNFinder.SYMMETRISE_BY_REMOVING)
-nf.set_neighbours(syst.particles(), syst.box)
-
-bop_obs = ba.BondOrderParameters({1, 2, 3, 4, 5, 6, 7, 8})
-bops = np.array(bop_obs.compute(syst))
+if len(sys.argv) < 3:
+    # COMPUTE THE BOND ORDER PARAMETERS
+    nf = ba.SANNFinder(2.5, ba.SANNFinder.SYMMETRISE_BY_REMOVING)
+    nf.set_neighbours(syst.particles(), syst.box)
+    
+    bop_obs = ba.BondOrderParameters({1, 2, 3, 4, 5, 6, 7, 8})
+    bops = np.array(bop_obs.compute(syst))
+else:
+    bops = np.loadtxt(sys.argv[2])
 
 # ENCODE THE BOPS THROUGH UNSUPERVISED LEARNING
 
@@ -64,13 +64,14 @@ learning_rate = 1e-2
 momentum = 9e-1
 code_dim = 2
 original_dim = bops.shape[1]
-hidden_dim = original_dim * 10
+hidden_dim = min(original_dim * 10, 100)
 weight_lambda = 1e-5
 
 training_dataset = tf.data.Dataset.from_tensor_slices(bops).batch(batch_size)
 
 autoencoder = ae.Autoencoder(original_dim=original_dim, code_dim=code_dim, hidden_dim=hidden_dim, weight_lambda=weight_lambda)
-opt = tf.optimizers.Adam(learning_rate=1e-3)
+#opt = tf.optimizers.SGD(learning_rate=learning_rate, momentum=momentum)
+opt = tf.optimizers.Adam(learning_rate=learning_rate)
 
 with open("loss_%s" % input_filename, "w") as loss_file:
     real_step = 0
@@ -107,7 +108,8 @@ clf = best_gmm
 cluster_probabilities = np.array(clf.predict_proba(encoded_bops))
 
 def entropy(prob):
-    return -np.sum(prob * np.log(prob))
+    my_prob = prob[prob > 0.]
+    return -np.sum(my_prob * np.log(my_prob))
 
 def reduce_prob(prob_Y, to_reduce):
     # copy the array
